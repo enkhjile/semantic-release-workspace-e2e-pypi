@@ -1,6 +1,6 @@
 [project]
 name = "enkhjile-srw-pypi-core"
-version = "0.0.0"
+version = "0.1.0a1"
 description = "Disposable semantic-release-workspace PyPI acceptance fixture"
 requires-python = ">=3.10"
 license = "MIT"
