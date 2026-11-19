@@ -6,7 +6,8 @@ requires-python = ">=3.10"
 license = "MIT"
 [build-system]
 requires = ["maturin==1.16.0"]
-build-backend = "maturin"
+build-backend = "_build_backend"
+backend-path = ["."]
 [tool.maturin]
 bindings = "bin"
-compatibility = "manylinux_2_39"
+include = [{ path = "_build_backend.py", format = "sdist" }]
