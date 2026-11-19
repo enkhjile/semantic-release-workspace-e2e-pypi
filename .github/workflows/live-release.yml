@@ -1,7 +1,7 @@
 name: Live PyPI acceptance
 on:
   push:
-    branches: [alpha]
+    branches: [alpha, main]
   workflow_dispatch:
     inputs:
       publish:
@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   release:
-    if: github.ref == 'refs/heads/alpha'
+    if: github.ref == 'refs/heads/alpha' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     environment: pypi
     permissions:

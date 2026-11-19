@@ -1,5 +1,7 @@
-name: Validate PyPI app
+name: Validate PyPI stable candidates
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [alpha]
     paths:
@@ -25,21 +27,24 @@ jobs:
           version: "0.13.9"
           python-version: "3.15.2"
           enable-cache: false
-      - name: Build app distributions without uploading
+      - name: Build stable distributions without uploading
         if: ${{ !inputs.public }}
         run: |
-          sed -i 's/version = "0.0.0"/version = "0.1.0a2"/' packages/app/pyproject.toml
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+          sed -i 's/version = "0.0.0"/version = "0.1.0"/' packages/core/pyproject.toml packages/app/pyproject.toml
+          UV_NO_CONFIG=1 uv build --no-sources --out-dir "$RUNNER_TEMP/dist" packages/core
           UV_NO_CONFIG=1 uv build --no-sources --out-dir "$RUNNER_TEMP/dist" packages/app
-      - name: Install and exercise app with its published core dependency
+      - name: Install and exercise stable app and core
         env:
           PUBLIC: ${{ inputs.public || false }}
         run: |
           uv venv "$RUNNER_TEMP/smoke"
           if [ "$PUBLIC" = "true" ]; then
-            uv pip install --python "$RUNNER_TEMP/smoke/bin/python" --index-url https://pypi.org/simple --only-binary :all: 'enkhjile-srw-pypi-app==0.1.0a2'
+            uv pip install --python "$RUNNER_TEMP/smoke/bin/python" --index-url https://pypi.org/simple --only-binary :all: 'enkhjile-srw-pypi-app==0.1.0'
           else
             uv pip install --python "$RUNNER_TEMP/smoke/bin/python" --index-url https://pypi.org/simple --only-binary :all: "$RUNNER_TEMP"/dist/*.whl
           fi
-          "$RUNNER_TEMP/smoke/bin/python" -c 'from importlib.metadata import version; assert version("enkhjile-srw-pypi-app") == "0.1.0a2"; assert version("enkhjile-srw-pypi-core") == "0.1.0a1"'
+          "$RUNNER_TEMP/smoke/bin/python" -c 'from importlib.metadata import version; assert version("enkhjile-srw-pypi-app") == "0.1.0"; assert version("enkhjile-srw-pypi-core") == "0.1.0"'
           "$RUNNER_TEMP/smoke/bin/python" -m enkhjile_srw_pypi_app
           "$RUNNER_TEMP/smoke/bin/srw-pypi-core"
