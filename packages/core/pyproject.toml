@@ -9,3 +9,4 @@ requires = ["maturin==1.16.0"]
 build-backend = "maturin"
 [tool.maturin]
 bindings = "bin"
+compatibility = "manylinux_2_39"
