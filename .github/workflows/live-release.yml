@@ -1,0 +1,54 @@
+name: Live PyPI acceptance
+on:
+  push:
+    branches: [alpha]
+  workflow_dispatch:
+    inputs:
+      publish:
+        type: boolean
+        default: false
+        description: Publish the reviewed batch using PyPI OIDC
+permissions:
+  contents: read
+concurrency:
+  group: live-pypi
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref == 'refs/heads/alpha'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fetch retained release state
+        run: git fetch origin '+refs/notes/*:refs/notes/*' '+refs/semantic-release-workspace/*:refs/semantic-release-workspace/*'
+      - uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4
+        with:
+          cache: true
+          require-lockfile: true
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2
+        with:
+          version: "0.13.9"
+          python-version: "3.15.2"
+          enable-cache: false
+      - name: Select Python and Rust
+        run: |
+          uv python install 3.15.2
+          echo "$(dirname "$(uv python find 3.15.2)")" >> "$GITHUB_PATH"
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - name: Preview release without writes
+        run: pnpm preview
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish approved batch
+        if: vars.PYPI_LIVE_APPROVED == 'true' && (github.event_name == 'push' || inputs.publish)
+        run: pnpm release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
