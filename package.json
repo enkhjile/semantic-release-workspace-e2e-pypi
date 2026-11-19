@@ -16,6 +16,6 @@
   },
   "devDependencies": {
     "semantic-release": "25.0.9",
-    "semantic-release-workspace": "file:vendor/semantic-release-workspace-0.0.0-development.tgz"
+    "semantic-release-workspace": "file:vendor/semantic-release-workspace-b51fed5.tgz"
   }
 }
